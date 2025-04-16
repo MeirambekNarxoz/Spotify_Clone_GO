@@ -30,8 +30,12 @@ func (r *playlistSongsRepository) Create(playlistSong *model.PlaylistSongs) erro
 
 // Удаление записи по PlaylistID и SongID
 func (r *playlistSongsRepository) Delete(playlistID, songID uint) error {
-	if err := r.db.Where("playlist_id = ? AND song_id = ?", playlistID, songID).Delete(&model.PlaylistSongs{}).Error; err != nil {
-		return err
+	result := r.db.Where("playlist_id = ? AND song_id = ?", playlistID, songID).Delete(&model.PlaylistSongs{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
 	}
 	return nil
 }

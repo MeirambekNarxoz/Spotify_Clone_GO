@@ -2,7 +2,9 @@ package delivery
 
 import (
 	"Spotify/internal/service"
+	"errors"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 )
@@ -49,24 +51,28 @@ func (p *PlaylistSongsController) AddSongToPlaylist(c *gin.Context) {
 // Удалить песню из плейлиста
 func (p *PlaylistSongsController) RemoveSongFromPlaylist(c *gin.Context) {
 	playlistID := c.Param("id")
-	songID := c.Param("id")
+	songID := c.Param("songId") // Исправлено с :sonId на :songId
 
-	// Преобразование параметров в uint
+	// Преобразование параметров
 	playlistIDUint, err := strconv.ParseUint(playlistID, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid playlist ID"})
 		return
 	}
+
 	songIDUint, err := strconv.ParseUint(songID, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid song ID"})
 		return
 	}
 
-	// Удаление песни из плейлиста
 	err = p.playlistSongsService.RemoveSongFromPlaylist(uint(playlistIDUint), uint(songIDUint))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Song not found in playlist"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 		return
 	}
 

@@ -4,6 +4,7 @@ import (
 	"Spotify/internal/model"
 	"Spotify/internal/repository"
 	"errors"
+	"gorm.io/gorm"
 )
 
 type PlaylistSongsService interface {
@@ -43,6 +44,24 @@ func (s *playlistSongsService) AddSongToPlaylist(playlistID, songID uint) error 
 
 // Удаление песни из плейлиста
 func (s *playlistSongsService) RemoveSongFromPlaylist(playlistID, songID uint) error {
+	// Проверяем существование связи
+	relations, err := s.repo.GetByPlaylistID(playlistID)
+	if err != nil {
+		return err
+	}
+
+	found := false
+	for _, rel := range relations {
+		if rel.SongID == songID {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return gorm.ErrRecordNotFound
+	}
+
 	return s.repo.Delete(playlistID, songID)
 }
 
