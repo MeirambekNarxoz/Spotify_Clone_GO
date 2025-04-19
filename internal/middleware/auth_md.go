@@ -43,3 +43,28 @@ func AuthMiddleware(jwtKey string) gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func RequireAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role, exists := c.Get("user_role")
+		if !exists || role != "ADMIN" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied. ADMIN role required"})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
+// RequireModerator проверяет, что роль пользователя — MODERATOR
+func RequireModerator() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role, exists := c.Get("user_role")
+		if !exists || role != "MODERATOR" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied. MODERATOR role required"})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}

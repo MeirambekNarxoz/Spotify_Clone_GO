@@ -30,7 +30,7 @@ func SetupRouter(db *gorm.DB, router *gin.Engine) *gin.Engine {
 	playlistSongsController := delivery.NewPlaylistSongsController(playlistSongsService)
 
 	// Альбомы
-	albumsGroup := router.Group("/albums", middleware.AuthMiddleware(JWTService.SecretKey))
+	albumsGroup := router.Group("/albums", middleware.AuthMiddleware(JWTService.SecretKey), middleware.RequireModerator())
 	{
 		albumsGroup.GET("/", albumController.GetAllAlbums)
 		albumsGroup.GET("/:id", albumController.GetAlbumByID)
