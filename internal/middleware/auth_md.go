@@ -44,27 +44,51 @@ func AuthMiddleware(jwtKey string) gin.HandlerFunc {
 	}
 }
 
-func RequireAdmin() gin.HandlerFunc {
+var roleHierarchy = map[string]int{
+	"USER":      1,
+	"MODERATOR": 2,
+	"ADMIN":     3,
+}
+
+// RequireRoleOrHigher — проверка, что у пользователя роль >= требуемой
+func RequireRoleOrHigher(requiredRole string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		role, exists := c.Get("user_role")
-		if !exists || role != "ADMIN" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied. ADMIN role required"})
+		roleAny, exists := c.Get("user_role")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Role not found in context"})
 			c.Abort()
 			return
 		}
+
+		userRole, ok := roleAny.(string)
+		if !ok {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid role format"})
+			c.Abort()
+			return
+		}
+
+		userLevel := roleHierarchy[userRole]
+		requiredLevel := roleHierarchy[requiredRole]
+
+		if userLevel < requiredLevel {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied: insufficient permissions"})
+			c.Abort()
+			return
+		}
+
 		c.Next()
 	}
 }
 
-// RequireModerator проверяет, что роль пользователя — MODERATOR
+// Удобные обёртки
+func RequireUser() gin.HandlerFunc {
+	return RequireRoleOrHigher("USER")
+}
+
 func RequireModerator() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		role, exists := c.Get("user_role")
-		if !exists || role != "MODERATOR" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied. MODERATOR role required"})
-			c.Abort()
-			return
-		}
-		c.Next()
-	}
+	return RequireRoleOrHigher("MODERATOR")
+}
+
+func RequireAdmin() gin.HandlerFunc {
+	return RequireRoleOrHigher("ADMIN")
 }

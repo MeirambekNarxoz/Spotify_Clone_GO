@@ -42,7 +42,7 @@ func SetupRouter(db *gorm.DB, router *gin.Engine) *gin.Engine {
 	router.GET("/songs/", songController.GetAllSongs)
 	router.GET("/songs/:id", songController.GetSongByID)
 	// Песни
-	songGroup := router.Group("/songs", middleware.AuthMiddleware(JWTService.SecretKey))
+	songGroup := router.Group("/songs", middleware.AuthMiddleware(JWTService.SecretKey), middleware.RequireModerator())
 	{
 		songGroup.POST("/", songController.CreateSong)
 		songGroup.PUT("/:id", songController.UpdateSong)
