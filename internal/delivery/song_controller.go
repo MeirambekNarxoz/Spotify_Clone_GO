@@ -21,6 +21,13 @@ func NewSongController(songService service.SongService) *SongController {
 }
 
 // GetAllSongs
+// @Security BearerToken
+
+// @Summary Get all songs
+// @Tags songs
+// @Produce json
+// @Success 200 {array} model.Song
+// @Router /songs [get]
 func (s *SongController) GetAllSongs(c *gin.Context) {
 	songs, err := s.songService.GetAllSongs()
 	if err != nil {
@@ -30,7 +37,6 @@ func (s *SongController) GetAllSongs(c *gin.Context) {
 	c.JSON(http.StatusOK, songs)
 }
 
-// CreateSong создает новую песню
 func (s *SongController) CreateSong(c *gin.Context) {
 	var song model.Song
 	if err := c.ShouldBindJSON(&song); err != nil {
@@ -47,6 +53,17 @@ func (s *SongController) CreateSong(c *gin.Context) {
 }
 
 // GetSongByID возвращает песню по ID
+// GetSongByID godoc
+// @Security BearerToken
+
+// @Summary Get song by ID
+// @Description Get a song by its ID (public)
+// @Tags songs
+// @Produce json
+// @Param id path int true "Song ID"
+// @Success 200 {object} model.Song
+// @Failure 404 {object} ErrorResponse
+// @Router /songs/{id} [get]
 func (s *SongController) GetSongByID(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

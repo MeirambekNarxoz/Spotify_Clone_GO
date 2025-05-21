@@ -37,6 +37,17 @@ func (a *AlbumController) CreateAlbum(c *gin.Context) {
 }
 
 // GetAlbumByID возвращает альбом по ID
+// GetAlbumByID godoc
+// @Security BearerToken
+// @Summary Get album by ID
+// @Security ApiKeyAuth
+// @Description Get an album by its ID (public)
+// @Tags albums
+// @Produce json
+// @Param id path int true "Album ID"
+// @Success 200 {object} model.Album
+// @Failure 404 {object} ErrorResponse
+// @Router /albums/{id} [get]
 func (a *AlbumController) GetAlbumByID(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -54,6 +65,15 @@ func (a *AlbumController) GetAlbumByID(c *gin.Context) {
 }
 
 // GetAllAlbums возвращает все альбомы
+// GetAllAlbums godoc
+// @Summary Get all albums
+// @Description Get list of all albums (public)
+// @Tags albums
+// @Security BearerToken
+
+// @Produce json
+// @Success 200 {array} model.Album
+// @Router /albums/ [get]
 func (a *AlbumController) GetAllAlbums(c *gin.Context) {
 	albums, err := a.albumService.GetAllAlbums()
 	if err != nil {

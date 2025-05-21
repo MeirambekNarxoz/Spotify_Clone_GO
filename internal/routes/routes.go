@@ -32,8 +32,6 @@ func SetupRouter(db *gorm.DB, router *gin.Engine) *gin.Engine {
 	// Альбомы
 	albumsGroup := router.Group("/albums", middleware.AuthMiddleware(JWTService.SecretKey), middleware.RequireModerator())
 	{
-		albumsGroup.GET("/", albumController.GetAllAlbums)
-		albumsGroup.GET("/:id", albumController.GetAlbumByID)
 		albumsGroup.POST("/", albumController.CreateAlbum)
 		albumsGroup.PUT("/:id", albumController.UpdateAlbum)
 		albumsGroup.DELETE("/:id", albumController.DeleteAlbum)
@@ -41,6 +39,8 @@ func SetupRouter(db *gorm.DB, router *gin.Engine) *gin.Engine {
 
 	router.GET("/songs/", songController.GetAllSongs)
 	router.GET("/songs/:id", songController.GetSongByID)
+	router.GET("/albums/", albumController.GetAllAlbums)
+	router.GET("/albums/:id", albumController.GetAlbumByID)
 	// Песни
 	songGroup := router.Group("/songs", middleware.AuthMiddleware(JWTService.SecretKey), middleware.RequireModerator())
 	{

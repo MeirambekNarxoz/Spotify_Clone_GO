@@ -10,6 +10,10 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"os"
+
+	_ "Spotify/cmd/server/docs" // Swagger docs, путь должен соответствовать go.mod
+	"github.com/swaggo/files"   // swagger embed files
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
@@ -39,6 +43,9 @@ func main() {
 
 	r := gin.Default()
 	routes.SetupRouter(db, r)
+
+	// Swagger endpoint
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	r.Run(":8081")
 }

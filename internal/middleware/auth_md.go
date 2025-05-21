@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// AuthMiddleware проверяет JWT-токен
+// AuthMiddleware проверяет JWT-токен и извлекает user_id и user_role
 func AuthMiddleware(jwtKey string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
@@ -25,12 +25,12 @@ func AuthMiddleware(jwtKey string) gin.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token data"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			c.Abort()
 			return
 		}
 
-		//TODO fields adapt
+		// Попытка извлечь user_id и user_role из claims
 		userID, okID := (*claims)["user_id"].(float64)
 		userRole, okROLE := (*claims)["user_role"].(string)
 		if !okID || !okROLE {
@@ -38,19 +38,21 @@ func AuthMiddleware(jwtKey string) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		c.Set("user_role", string(userRole))
+		c.Set("user_role", userRole)
 		c.Set("user_id", int(userID))
+
 		c.Next()
 	}
 }
 
+// Ролевая иерархия: более высокие значения имеют больше прав
 var roleHierarchy = map[string]int{
 	"USER":      1,
 	"MODERATOR": 2,
 	"ADMIN":     3,
 }
 
-// RequireRoleOrHigher — проверка, что у пользователя роль >= требуемой
+// RequireRoleOrHigher проверяет, что у пользователя роль >= требуемой
 func RequireRoleOrHigher(requiredRole string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		roleAny, exists := c.Get("user_role")
@@ -67,8 +69,14 @@ func RequireRoleOrHigher(requiredRole string) gin.HandlerFunc {
 			return
 		}
 
-		userLevel := roleHierarchy[userRole]
-		requiredLevel := roleHierarchy[requiredRole]
+		userLevel, okUser := roleHierarchy[userRole]
+		requiredLevel, okRequired := roleHierarchy[requiredRole]
+
+		if !okUser || !okRequired {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Unknown role"})
+			c.Abort()
+			return
+		}
 
 		if userLevel < requiredLevel {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied: insufficient permissions"})
